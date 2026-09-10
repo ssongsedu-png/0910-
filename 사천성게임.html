@@ -1,0 +1,883 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101b2c">
+  <title>사천성 — 달빛 패맞추기</title>
+  <style>
+    :root {
+      --ink: #122033;
+      --navy: #101b2c;
+      --navy-2: #172940;
+      --paper: #fff8e8;
+      --paper-2: #f4e5c4;
+      --gold: #efbd57;
+      --coral: #ec735f;
+      --mint: #76c7ad;
+      --sky: #72a6d8;
+      --line: rgba(255,255,255,.12);
+      --shadow: 0 18px 50px rgba(0,0,0,.28);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { min-height: 100%; }
+
+    body {
+      margin: 0;
+      color: #f9f1df;
+      font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 12% 8%, rgba(114,166,216,.16), transparent 27rem),
+        radial-gradient(circle at 90% 82%, rgba(236,115,95,.13), transparent 29rem),
+        var(--navy);
+      display: grid;
+      place-items: center;
+      padding: clamp(14px, 3vw, 34px);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .055;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90' viewBox='0 0 90 90'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.7'/%3E%3C/svg%3E");
+    }
+
+    button { font: inherit; }
+
+    .app {
+      width: min(980px, 100%);
+      position: relative;
+      z-index: 1;
+    }
+
+    .masthead {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 16px;
+    }
+
+    .eyebrow {
+      color: var(--gold);
+      font-size: .75rem;
+      font-weight: 800;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: Georgia, "Noto Serif KR", serif;
+      font-size: clamp(2rem, 5vw, 3.6rem);
+      line-height: .95;
+      letter-spacing: -.055em;
+      font-weight: 800;
+    }
+
+    .instructions {
+      margin: 0 0 4px;
+      max-width: 400px;
+      color: #bdcad9;
+      text-align: right;
+      font-size: .92rem;
+      line-height: 1.55;
+    }
+
+    .game-card {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: linear-gradient(145deg, rgba(30,48,72,.94), rgba(16,29,47,.96));
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 16px;
+      min-height: 88px;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,.025);
+    }
+
+    .stats { display: flex; gap: clamp(12px, 3vw, 32px); }
+
+    .stat-label {
+      display: block;
+      color: #8fa2ba;
+      font-size: .72rem;
+      font-weight: 750;
+      letter-spacing: .13em;
+      margin-bottom: 2px;
+    }
+
+    .stat-value {
+      display: block;
+      color: #fff9ea;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: clamp(1.15rem, 3vw, 1.55rem);
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timer-wrap {
+      display: grid;
+      place-items: center;
+      position: relative;
+      width: 62px;
+      height: 62px;
+    }
+
+    .timer-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: conic-gradient(var(--gold) var(--progress, 100%), rgba(255,255,255,.1) 0);
+      mask: radial-gradient(transparent 56%, #000 58%);
+      -webkit-mask: radial-gradient(transparent 56%, #000 58%);
+      transition: background .25s linear;
+    }
+
+    .timer-text {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-weight: 850;
+      font-size: .9rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .actions { justify-self: end; display: flex; gap: 8px; }
+
+    .control {
+      min-height: 42px;
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 12px;
+      padding: 0 14px;
+      background: rgba(255,255,255,.06);
+      color: #f8f1e3;
+      font-weight: 720;
+      cursor: pointer;
+      transition: transform .15s, background .15s, border-color .15s;
+    }
+
+    .control:hover { background: rgba(255,255,255,.11); border-color: rgba(255,255,255,.28); }
+    .control:active { transform: translateY(1px) scale(.98); }
+    .control:focus-visible, .tile:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+    .control.accent { color: var(--navy); background: var(--gold); border-color: var(--gold); }
+    .control.accent:hover { background: #ffd278; }
+
+    .status-row {
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px 16px;
+      color: #b8c6d8;
+      font-size: .88rem;
+      border-bottom: 1px solid rgba(255,255,255,.065);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--mint);
+      box-shadow: 0 0 12px rgba(118,199,173,.65);
+      flex: 0 0 auto;
+    }
+
+    .board-zone {
+      display: grid;
+      place-items: center;
+      padding: clamp(14px, 3vw, 26px);
+      min-height: 530px;
+    }
+
+    .playfield {
+      position: relative;
+      padding: clamp(22px, 5vw, 48px);
+      border: 1px solid rgba(239,189,87,.18);
+      border-radius: 19px;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px),
+        linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px),
+        #0b1727;
+      background-size: 22px 22px;
+      box-shadow: inset 0 0 45px rgba(0,0,0,.28);
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(8, clamp(38px, 7.25vw, 68px));
+      grid-auto-rows: clamp(46px, 7.7vw, 74px);
+      gap: clamp(4px, 1vw, 8px);
+      position: relative;
+      z-index: 2;
+    }
+
+    .tile {
+      position: relative;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: clamp(8px, 1.3vw, 13px);
+      color: var(--tile-color, var(--ink));
+      background:
+        linear-gradient(150deg, rgba(255,255,255,.88), transparent 46%),
+        var(--paper);
+      box-shadow:
+        0 5px 0 #cdbb98,
+        0 9px 14px rgba(0,0,0,.3),
+        inset 0 0 0 1px rgba(80,55,22,.13);
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      transition: transform .14s ease, box-shadow .14s ease, filter .14s;
+    }
+
+    .tile::after {
+      content: "";
+      position: absolute;
+      inset: 5px;
+      border-radius: 8px;
+      border: 1px solid currentColor;
+      opacity: .17;
+      pointer-events: none;
+    }
+
+    .tile:hover { transform: translateY(-2px); filter: brightness(1.03); }
+    .tile.selected {
+      transform: translateY(-4px) scale(1.045);
+      box-shadow: 0 4px 0 #c48d27, 0 0 0 4px var(--gold), 0 13px 20px rgba(0,0,0,.38);
+      z-index: 4;
+    }
+
+    .tile.matched { animation: vanish .32s ease forwards; pointer-events: none; }
+    .tile.wrong { animation: wrong .28s ease; }
+
+    .tile.empty {
+      opacity: 0;
+      pointer-events: none;
+      box-shadow: none;
+    }
+
+    .tile-icon {
+      display: block;
+      font-family: Georgia, "Noto Serif KR", serif;
+      font-size: clamp(1.25rem, 3.2vw, 2rem);
+      font-weight: 850;
+      line-height: 1;
+      text-shadow: 0 1px #fff;
+    }
+
+    .tile-mark {
+      position: absolute;
+      bottom: 7px;
+      font-size: clamp(.43rem, .9vw, .6rem);
+      letter-spacing: .11em;
+      opacity: .56;
+      font-weight: 900;
+    }
+
+    .path-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+      z-index: 6;
+    }
+
+    .path-line {
+      fill: none;
+      stroke: #fff4b8;
+      stroke-width: 5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 0 5px #efbd57);
+      animation: trace .4s ease-out both;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: max(24px, env(safe-area-inset-bottom));
+      z-index: 30;
+      transform: translate(-50%, 24px);
+      padding: 11px 17px;
+      border-radius: 999px;
+      color: var(--navy);
+      background: var(--paper);
+      box-shadow: 0 12px 30px rgba(0,0,0,.3);
+      font-weight: 800;
+      opacity: 0;
+      pointer-events: none;
+      transition: .25s ease;
+      white-space: nowrap;
+    }
+
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: rgba(5,12,22,.78);
+      backdrop-filter: blur(10px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s;
+    }
+
+    .overlay.show { opacity: 1; pointer-events: auto; }
+
+    .result-card {
+      width: min(430px, 100%);
+      padding: clamp(28px, 7vw, 46px);
+      border: 1px solid rgba(239,189,87,.35);
+      border-radius: 25px;
+      text-align: center;
+      background: linear-gradient(150deg, #1f3550, #111e31);
+      box-shadow: var(--shadow);
+    }
+
+    .result-seal {
+      display: grid;
+      place-items: center;
+      width: 70px;
+      height: 70px;
+      margin: 0 auto 18px;
+      border-radius: 50%;
+      color: var(--navy);
+      background: var(--gold);
+      font-family: Georgia, serif;
+      font-size: 2rem;
+      box-shadow: 0 0 0 7px rgba(239,189,87,.12);
+    }
+
+    .result-title { margin: 0 0 8px; font-family: Georgia, "Noto Serif KR", serif; font-size: 2.2rem; }
+    .result-copy { margin: 0 0 24px; color: #b9c7d8; line-height: 1.65; }
+    .result-score { color: var(--gold); font-size: 1.55rem; font-weight: 850; }
+
+    @keyframes vanish {
+      0% { opacity: 1; transform: scale(1); }
+      55% { opacity: 1; transform: scale(1.12); filter: brightness(1.4); }
+      100% { opacity: 0; transform: scale(.55); }
+    }
+
+    @keyframes wrong {
+      0%,100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+
+    @keyframes trace { from { stroke-dasharray: 12 16; opacity: .3; } to { stroke-dasharray: 2000 0; opacity: 1; } }
+
+    @media (max-width: 680px) {
+      body { padding: 10px; place-items: start center; }
+      .masthead { align-items: flex-start; margin: 9px 4px 12px; }
+      .instructions { display: none; }
+      .topbar { grid-template-columns: 1fr auto; padding: 12px; gap: 10px; }
+      .timer-wrap { grid-row: 1; grid-column: 2; width: 56px; height: 56px; }
+      .actions { grid-column: 1 / -1; justify-self: stretch; }
+      .actions .control { flex: 1; }
+      .board-zone { min-height: 0; padding: 10px 5px 18px; }
+      .playfield { padding: 25px 24px; border-left: 0; border-right: 0; width: 100%; }
+      .board { grid-template-columns: repeat(8, minmax(0, 1fr)); grid-auto-rows: clamp(43px, 12vw, 58px); width: 100%; gap: 4px; }
+      .tile-mark { bottom: 5px; }
+      .status-row { font-size: .8rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="masthead">
+      <div>
+        <div class="eyebrow">Moonlit Tile Match</div>
+        <h1>사천성</h1>
+      </div>
+      <p class="instructions">같은 타일 두 개를 고르세요. 경로는 다른 타일을 통과하지 않고 최대 두 번까지만 꺾일 수 있습니다.</p>
+    </header>
+
+    <section class="game-card" aria-label="사천성 게임">
+      <div class="topbar">
+        <div class="stats">
+          <div>
+            <span class="stat-label">점수</span>
+            <span class="stat-value" id="score">0</span>
+          </div>
+          <div>
+            <span class="stat-label">남은 짝</span>
+            <span class="stat-value" id="pairs">32</span>
+          </div>
+        </div>
+
+        <div class="timer-wrap" aria-label="남은 시간">
+          <div class="timer-ring" id="timerRing"></div>
+          <span class="timer-text" id="timer">03:00</span>
+        </div>
+
+        <div class="actions">
+          <button class="control" id="shuffleBtn" type="button" aria-label="남은 타일 섞기">섞기 · <span id="shuffleCount">3</span></button>
+          <button class="control accent" id="restartBtn" type="button">새 게임</button>
+        </div>
+      </div>
+
+      <div class="status-row" aria-live="polite">
+        <span class="status-dot"></span>
+        <span id="statusText">첫 번째 타일을 선택하세요</span>
+      </div>
+
+      <div class="board-zone">
+        <div class="playfield" id="playfield">
+          <div class="board" id="board" role="grid" aria-label="8행 8열 사천성 보드"></div>
+          <svg class="path-layer" id="pathLayer" aria-hidden="true"></svg>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+    <div class="result-card">
+      <div class="result-seal" id="resultSeal">勝</div>
+      <h2 class="result-title" id="resultTitle">완성!</h2>
+      <p class="result-copy" id="resultCopy"></p>
+      <button class="control accent" id="playAgainBtn" type="button">다시 도전하기</button>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const ROWS = 8;
+      const COLS = 8;
+      const TOTAL_TIME = 180;
+      const TILE_TYPES = [
+        { icon: "春", mark: "봄", color: "#d44f49" },
+        { icon: "夏", mark: "여름", color: "#dc7d31" },
+        { icon: "秋", mark: "가을", color: "#a96724" },
+        { icon: "冬", mark: "겨울", color: "#3376aa" },
+        { icon: "月", mark: "달", color: "#7056a8" },
+        { icon: "日", mark: "해", color: "#d05235" },
+        { icon: "山", mark: "산", color: "#49755d" },
+        { icon: "水", mark: "물", color: "#327a9e" },
+        { icon: "風", mark: "바람", color: "#348b7f" },
+        { icon: "花", mark: "꽃", color: "#c94f78" },
+        { icon: "竹", mark: "대나무", color: "#4d8045" },
+        { icon: "松", mark: "소나무", color: "#2e7252" },
+        { icon: "福", mark: "복", color: "#c9453c" },
+        { icon: "喜", mark: "기쁨", color: "#bc476f" },
+        { icon: "星", mark: "별", color: "#b78024" },
+        { icon: "雲", mark: "구름", color: "#557da5" }
+      ];
+
+      const els = {
+        board: document.getElementById("board"),
+        playfield: document.getElementById("playfield"),
+        pathLayer: document.getElementById("pathLayer"),
+        score: document.getElementById("score"),
+        pairs: document.getElementById("pairs"),
+        timer: document.getElementById("timer"),
+        timerRing: document.getElementById("timerRing"),
+        status: document.getElementById("statusText"),
+        shuffleBtn: document.getElementById("shuffleBtn"),
+        shuffleCount: document.getElementById("shuffleCount"),
+        restartBtn: document.getElementById("restartBtn"),
+        overlay: document.getElementById("overlay"),
+        resultTitle: document.getElementById("resultTitle"),
+        resultCopy: document.getElementById("resultCopy"),
+        resultSeal: document.getElementById("resultSeal"),
+        playAgainBtn: document.getElementById("playAgainBtn"),
+        toast: document.getElementById("toast")
+      };
+
+      let grid = [];
+      let selected = null;
+      let score = 0;
+      let pairsLeft = (ROWS * COLS) / 2;
+      let shufflesLeft = 3;
+      let timeLeft = TOTAL_TIME;
+      let timerId = null;
+      let gameActive = false;
+      let busy = false;
+      let toastId = null;
+
+      const shuffle = array => {
+        const copy = [...array];
+        for (let i = copy.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [copy[i], copy[j]] = [copy[j], copy[i]];
+        }
+        return copy;
+      };
+
+      function createTilePool() {
+        const pool = [];
+        TILE_TYPES.forEach((_, type) => {
+          for (let i = 0; i < 4; i++) pool.push(type);
+        });
+        return shuffle(pool);
+      }
+
+      function startGame() {
+        clearInterval(timerId);
+        selected = null;
+        score = 0;
+        pairsLeft = (ROWS * COLS) / 2;
+        shufflesLeft = 3;
+        timeLeft = TOTAL_TIME;
+        gameActive = true;
+        busy = false;
+        els.overlay.classList.remove("show");
+        grid = Array.from({ length: ROWS + 2 }, () => Array(COLS + 2).fill(null));
+
+        const pool = createTilePool();
+        for (let r = 1; r <= ROWS; r++) {
+          for (let c = 1; c <= COLS; c++) grid[r][c] = pool.shift();
+        }
+
+        ensureMove(false);
+        renderBoard();
+        updateHUD();
+        setStatus("첫 번째 타일을 선택하세요");
+        timerId = setInterval(tick, 1000);
+      }
+
+      function renderBoard() {
+        const fragment = document.createDocumentFragment();
+        for (let r = 1; r <= ROWS; r++) {
+          for (let c = 1; c <= COLS; c++) {
+            const type = grid[r][c];
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = type === null ? "tile empty" : "tile";
+            button.dataset.row = r;
+            button.dataset.col = c;
+            button.setAttribute("role", "gridcell");
+            button.tabIndex = type === null ? -1 : 0;
+            if (type !== null) {
+              const info = TILE_TYPES[type];
+              button.style.setProperty("--tile-color", info.color);
+              button.setAttribute("aria-label", `${info.mark} 타일, ${r}행 ${c}열`);
+              button.innerHTML = `<span class="tile-icon">${info.icon}</span><span class="tile-mark">${info.mark}</span>`;
+              if (selected && selected.r === r && selected.c === c) button.classList.add("selected");
+            }
+            fragment.appendChild(button);
+          }
+        }
+        els.board.replaceChildren(fragment);
+      }
+
+      function updateHUD() {
+        els.score.textContent = score.toLocaleString("ko-KR");
+        els.pairs.textContent = pairsLeft;
+        els.shuffleCount.textContent = shufflesLeft;
+        const min = String(Math.floor(timeLeft / 60)).padStart(2, "0");
+        const sec = String(timeLeft % 60).padStart(2, "0");
+        els.timer.textContent = `${min}:${sec}`;
+        els.timerRing.style.setProperty("--progress", `${(timeLeft / TOTAL_TIME) * 100}%`);
+        els.timerRing.style.background = `conic-gradient(${timeLeft <= 30 ? "#ec735f" : "#efbd57"} ${(timeLeft / TOTAL_TIME) * 100}%, rgba(255,255,255,.1) 0)`;
+        els.shuffleBtn.disabled = !gameActive || shufflesLeft <= 0;
+      }
+
+      function tick() {
+        if (!gameActive) return;
+        timeLeft = Math.max(0, timeLeft - 1);
+        updateHUD();
+        if (timeLeft === 0) finishGame(false);
+      }
+
+      function setStatus(message) { els.status.textContent = message; }
+
+      function showToast(message) {
+        clearTimeout(toastId);
+        els.toast.textContent = message;
+        els.toast.classList.add("show");
+        toastId = setTimeout(() => els.toast.classList.remove("show"), 1800);
+      }
+
+      function handleTileClick(event) {
+        const tile = event.target.closest(".tile:not(.empty)");
+        if (!tile || !gameActive || busy) return;
+
+        const current = { r: Number(tile.dataset.row), c: Number(tile.dataset.col) };
+        if (selected && selected.r === current.r && selected.c === current.c) {
+          selected = null;
+          renderBoard();
+          setStatus("선택을 취소했습니다");
+          return;
+        }
+
+        if (!selected) {
+          selected = current;
+          tile.classList.add("selected");
+          setStatus("짝이 되는 두 번째 타일을 선택하세요");
+          return;
+        }
+
+        const first = selected;
+        const firstTile = getTileElement(first);
+        const secondTile = tile;
+        const sameType = grid[first.r][first.c] === grid[current.r][current.c];
+        const path = sameType ? findPath(first, current) : null;
+
+        if (path) {
+          busy = true;
+          drawPath(path);
+          firstTile?.classList.add("matched");
+          secondTile.classList.add("matched");
+          const bends = Math.max(0, path.length - 2);
+          const earned = 100 + Math.max(0, 2 - bends) * 25;
+          score += earned;
+          pairsLeft--;
+          setStatus(`연결 성공 · +${earned}점`);
+
+          setTimeout(() => {
+            grid[first.r][first.c] = null;
+            grid[current.r][current.c] = null;
+            selected = null;
+            busy = false;
+            clearPath();
+            renderBoard();
+            updateHUD();
+
+            if (pairsLeft === 0) {
+              finishGame(true);
+            } else {
+              ensureMove(true);
+            }
+          }, 430);
+        } else {
+          firstTile?.classList.add("wrong");
+          secondTile.classList.add("wrong");
+          selected = current;
+          setTimeout(renderBoard, 260);
+          setStatus(sameType ? "경로가 막혀 있어요" : "서로 다른 타일입니다");
+        }
+      }
+
+      function getTileElement(pos) {
+        return els.board.querySelector(`[data-row="${pos.r}"][data-col="${pos.c}"]`);
+      }
+
+      // 방향과 꺾은 횟수를 상태로 저장하는 BFS. 테두리의 빈 칸도 경로로 허용한다.
+      function findPath(start, end) {
+        const directions = [[-1,0],[0,1],[1,0],[0,-1]];
+        const queue = [];
+        const visited = new Map();
+
+        for (let d = 0; d < 4; d++) {
+          const nr = start.r + directions[d][0];
+          const nc = start.c + directions[d][1];
+          if (!isPassable(nr, nc, end)) continue;
+          const key = `${nr},${nc},${d}`;
+          visited.set(key, { turns: 0, prev: null });
+          queue.push({ r: nr, c: nc, d, turns: 0, key });
+        }
+
+        let head = 0;
+        let destination = null;
+        while (head < queue.length) {
+          const state = queue[head++];
+          if (state.r === end.r && state.c === end.c) {
+            destination = state;
+            break;
+          }
+
+          for (let d = 0; d < 4; d++) {
+            const turns = state.turns + (d === state.d ? 0 : 1);
+            if (turns > 2) continue;
+            const nr = state.r + directions[d][0];
+            const nc = state.c + directions[d][1];
+            if (!isPassable(nr, nc, end)) continue;
+            const key = `${nr},${nc},${d}`;
+            const old = visited.get(key);
+            if (old && old.turns <= turns) continue;
+            visited.set(key, { turns, prev: state.key });
+            queue.push({ r: nr, c: nc, d, turns, key });
+          }
+        }
+
+        if (!destination) return null;
+        const cells = [];
+        let key = destination.key;
+        while (key) {
+          const [r, c] = key.split(",").map(Number);
+          cells.push({ r, c });
+          key = visited.get(key).prev;
+        }
+        cells.push(start);
+        cells.reverse();
+
+        return cells.filter((cell, index) => {
+          if (index === 0 || index === cells.length - 1) return true;
+          const prev = cells[index - 1];
+          const next = cells[index + 1];
+          return !((prev.r === cell.r && cell.r === next.r) || (prev.c === cell.c && cell.c === next.c));
+        });
+      }
+
+      function isPassable(r, c, end) {
+        if (r < 0 || r > ROWS + 1 || c < 0 || c > COLS + 1) return false;
+        return grid[r][c] === null || (r === end.r && c === end.c);
+      }
+
+      function hasAvailableMove() {
+        const byType = new Map();
+        for (let r = 1; r <= ROWS; r++) {
+          for (let c = 1; c <= COLS; c++) {
+            const type = grid[r][c];
+            if (type === null) continue;
+            if (!byType.has(type)) byType.set(type, []);
+            byType.get(type).push({ r, c });
+          }
+        }
+
+        for (const positions of byType.values()) {
+          for (let i = 0; i < positions.length; i++) {
+            for (let j = i + 1; j < positions.length; j++) {
+              if (findPath(positions[i], positions[j])) return true;
+            }
+          }
+        }
+        return false;
+      }
+
+      function shuffleRemaining() {
+        const positions = [];
+        const values = [];
+        for (let r = 1; r <= ROWS; r++) {
+          for (let c = 1; c <= COLS; c++) {
+            if (grid[r][c] !== null) {
+              positions.push({ r, c });
+              values.push(grid[r][c]);
+            }
+          }
+        }
+
+        const mixed = shuffle(values);
+        positions.forEach((pos, i) => { grid[pos.r][pos.c] = mixed[i]; });
+        selected = null;
+      }
+
+      function ensureMove(notify) {
+        if (pairsLeft <= 0 || hasAvailableMove()) return;
+        let attempts = 0;
+        do {
+          shuffleRemaining();
+          attempts++;
+        } while (!hasAvailableMove() && attempts < 200);
+
+        // 극단적인 경우, 서로 연결 가능한 두 위치에 같은 종류를 배치해 진행을 보장한다.
+        if (!hasAvailableMove()) forceOneMove();
+        renderBoard();
+        if (notify) {
+          setStatus("가능한 짝이 없어 자동으로 섞었습니다");
+          showToast("막힘 감지 · 자동 셔플");
+        }
+      }
+
+      function forceOneMove() {
+        const occupied = [];
+        for (let r = 1; r <= ROWS; r++) {
+          for (let c = 1; c <= COLS; c++) if (grid[r][c] !== null) occupied.push({ r, c });
+        }
+        for (let i = 0; i < occupied.length; i++) {
+          for (let j = i + 1; j < occupied.length; j++) {
+            const a = occupied[i], b = occupied[j];
+            if (!findPath(a, b)) continue;
+            const targetType = grid[a.r][a.c];
+            const donor = occupied.find(p => (p.r !== a.r || p.c !== a.c) && grid[p.r][p.c] === targetType);
+            if (donor) {
+              [grid[b.r][b.c], grid[donor.r][donor.c]] = [grid[donor.r][donor.c], grid[b.r][b.c]];
+              return;
+            }
+          }
+        }
+      }
+
+      function manualShuffle() {
+        if (!gameActive || busy || shufflesLeft <= 0) return;
+        shufflesLeft--;
+        shuffleRemaining();
+        let attempts = 0;
+        while (!hasAvailableMove() && attempts++ < 200) shuffleRemaining();
+        if (!hasAvailableMove()) forceOneMove();
+        renderBoard();
+        updateHUD();
+        setStatus("남은 타일을 새롭게 섞었습니다");
+        showToast(`셔플 사용 · ${shufflesLeft}회 남음`);
+      }
+
+      function drawPath(path) {
+        const fieldRect = els.playfield.getBoundingClientRect();
+        const first = getTileElement({ r: 1, c: 1 });
+        const secondCol = getTileElement({ r: 1, c: 2 });
+        const secondRow = getTileElement({ r: 2, c: 1 });
+        if (!first || !secondCol || !secondRow) return;
+
+        const a = first.getBoundingClientRect();
+        const b = secondCol.getBoundingClientRect();
+        const d = secondRow.getBoundingClientRect();
+        const originX = a.left - fieldRect.left + a.width / 2;
+        const originY = a.top - fieldRect.top + a.height / 2;
+        const stepX = b.left - a.left;
+        const stepY = d.top - a.top;
+        const points = path.map(p => `${originX + (p.c - 1) * stepX},${originY + (p.r - 1) * stepY}`).join(" ");
+        els.pathLayer.setAttribute("viewBox", `0 0 ${fieldRect.width} ${fieldRect.height}`);
+        els.pathLayer.innerHTML = `<polyline class="path-line" points="${points}"></polyline>`;
+      }
+
+      function clearPath() { els.pathLayer.replaceChildren(); }
+
+      function finishGame(won) {
+        gameActive = false;
+        clearInterval(timerId);
+        updateHUD();
+        if (won) {
+          const bonus = timeLeft * 10;
+          score += bonus;
+          els.score.textContent = score.toLocaleString("ko-KR");
+          els.resultSeal.textContent = "勝";
+          els.resultTitle.textContent = "완성!";
+          els.resultCopy.innerHTML = `모든 타일을 연결했습니다.<br><span class="result-score">${score.toLocaleString("ko-KR")}점</span><br>남은 시간 보너스 +${bonus.toLocaleString("ko-KR")}`;
+        } else {
+          els.resultSeal.textContent = "時";
+          els.resultTitle.textContent = "시간 종료";
+          els.resultCopy.innerHTML = `이번 기록은 <span class="result-score">${score.toLocaleString("ko-KR")}점</span>입니다.<br>한 번 더 도전해 보세요.`;
+        }
+        setTimeout(() => els.overlay.classList.add("show"), 180);
+      }
+
+      els.board.addEventListener("click", handleTileClick);
+      els.shuffleBtn.addEventListener("click", manualShuffle);
+      els.restartBtn.addEventListener("click", startGame);
+      els.playAgainBtn.addEventListener("click", startGame);
+      window.addEventListener("resize", clearPath);
+
+      startGame();
+    })();
+  </script>
+</body>
+</html>
