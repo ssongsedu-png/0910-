@@ -1,8 +1,9 @@
 {
-  "rewrites": [
+  "redirects": [
     {
       "source": "/",
-      "destination": "/사천성게임.html"
+      "destination": "/사천성게임.html",
+      "permanent": false
     }
   ]
 }
